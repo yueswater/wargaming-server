@@ -50,6 +50,24 @@ exports.getActive = (req, res) => {
   res.json(safeGame(game));
 };
 
+// GET /api/games/admin/active — full game state including submission payloads (admin only)
+exports.adminGetActive = (req, res) => {
+  const game = getActiveGame();
+  if (!game) return res.json(null);
+  // Return raw game — all submission payloads visible
+  res.json({
+    id: game.id,
+    name: game.name,
+    status: game.status,
+    createdAt: game.createdAt,
+    updatedAt: game.updatedAt,
+    currentRoundNumber: game.currentRoundNumber,
+    players: game.players,
+    rounds: game.rounds,
+    aggregateState: game.aggregateState,
+  });
+};
+
 // GET /api/games/:id — get a specific game
 exports.get = (req, res) => {
   const game = getGame(req.params.id);

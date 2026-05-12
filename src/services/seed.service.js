@@ -30,6 +30,14 @@ const roleAccounts = [
     envDisplayName: 'ROLE_THINKTANK_DISPLAY_NAME',
     fallbackDisplayName: '智庫',
   },
+  {
+    gameRole: null,
+    systemRole: 'admin',
+    envUsername: 'ROLE_ADMIN_USERNAME',
+    envPassword: 'ROLE_ADMIN_PASSWORD',
+    envDisplayName: 'ROLE_ADMIN_DISPLAY_NAME',
+    fallbackDisplayName: '上帝視角',
+  },
 ];
 
 async function seedRoleUsers() {
@@ -44,13 +52,14 @@ async function seedRoleUsers() {
 
     const passwordHash = hashPassword(password);
     const existing = await getUserByUsername(username);
+    const systemRole = account.systemRole || 'user';
 
     if (!existing) {
       await createUser({
         username,
         displayName,
         passwordHash,
-        role: 'user',
+        role: systemRole,
         gameRole: account.gameRole,
         status: 'active',
       });
@@ -60,7 +69,7 @@ async function seedRoleUsers() {
     await updateUser(existing.id, {
       displayName,
       passwordHash,
-      role: 'user',
+      role: systemRole,
       gameRole: account.gameRole,
       status: 'active',
     });

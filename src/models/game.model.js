@@ -43,10 +43,12 @@ function getGame(id) {
 }
 
 function getActiveGame() {
+  let lobbyGame = null;
   for (const game of games.values()) {
-    if (game.status === 'active' || game.status === 'lobby') return game;
+    if (game.status === 'active') return game;
+    if (game.status === 'lobby' && !lobbyGame) lobbyGame = game;
   }
-  return null;
+  return lobbyGame;
 }
 
 function getAllGames() {
