@@ -1,0 +1,21 @@
+{
+  "name": "wargame-server",
+  "version": "1.0.0",
+  "description": "台積電危機談判兵推 - Backend API Server",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
+    "express": "^4.21.0",
+    "jsonwebtoken": "^9.0.3",
+    "socket.io": "^4.8.3",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^6.0.1",
+    "uuid": "^10.0.0"
+  }
+}
