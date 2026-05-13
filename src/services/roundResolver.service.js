@@ -58,6 +58,7 @@ function _resolveRound(game, round) {
     finalOpinion: result.finalOpinion,
     finalAttack: result.finalAttack,
     allOk: result.allOk,
+    usVictoryOk: result.usVictoryOk,
   });
 
   if (result.allOk || game.currentRoundNumber >= MAX_ROUNDS) {

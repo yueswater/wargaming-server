@@ -16,7 +16,7 @@ const ATK_TABLE = [0, 10, 18, 24, 28, 30];
 const OP_TABLE = [0, 8, 14, 18, 20, 21];
 
 // 台積電資金表 (限電週數 → 可用資金)
-const FUND_TABLE = { 1: 100, 2: 90, 3: 80, 4: 70, 5: 60 };
+const FUND_TABLE = { 1: 120, 2: 110, 3: 100, 4: 90, 5: 80 };
 
 // 初始條件
 const INITIAL = {
@@ -63,7 +63,7 @@ function calculateGame(params) {
 
   // === 國防供應 ===
   const defenseActive = defenseMode === 'negotiated' || defenseMode === 'forced';
-  const defenseFundCost = defenseActive ? 10 : 0;
+  const defenseFundCost = defenseMode === 'negotiated' ? 10 : defenseMode === 'forced' ? 5 : 0;
   const defenseAtkBonus = defenseActive ? 10 : 0;
   const defenseForced = defenseMode === 'forced';
 
@@ -72,7 +72,8 @@ function calculateGame(params) {
 
   // === 攻台機率計算 ===
   const baseAtkReduction = ATK_TABLE[usYears] || 0;
-  const baseAtk = Math.max(20, INITIAL.attackProb - baseAtkReduction);
+  const industryCrisisAtkIncrease = tsmcBlackoutWeeks === 5 ? 10 : 0;
+  const baseAtk = Math.min(100, Math.max(20, INITIAL.attackProb - baseAtkReduction + industryCrisisAtkIncrease));
   const finalAtk = Math.max(20, baseAtk - defenseAtkBonus);
 
   // === 民意計算 ===
@@ -111,6 +112,7 @@ function calculateGame(params) {
   const opOk = finalOp >= 60;
   const atkOk = finalAtk <= 30;
   const allOk = opOk && atkOk;
+  const usVictoryOk = atkOk && (techTransfer >= 60 || usFund >= 50);
 
   // === 資金分配明細 ===
   const fundBreakdown = {
@@ -142,6 +144,7 @@ function calculateGame(params) {
   const attackBreakdown = {
     initial: INITIAL.attackProb,
     usCommitmentReduction: -baseAtkReduction,
+    industryCrisisIncrease: industryCrisisAtkIncrease,
     defenseReduction: defenseActive ? -10 : 0,
     final: finalAtk,
   };
@@ -164,6 +167,7 @@ function calculateGame(params) {
     opinionOk: opOk,
     attackOk: atkOk,
     allOk,
+    usVictoryOk,
 
     // 輸入參數
     params: {
@@ -241,7 +245,7 @@ function runMonteCarlo(count = 1000) {
     const tsmcWks = Math.min(5, Math.max(1, wkRaw));
 
     // 國防供應談判
-    const base = 80 + (3 - tsmcWks) * 10;
+    const base = FUND_TABLE[tsmcWks];
     const afterUS = base - usFund;
     const ttOk = tech <= 40;
     const yrOk = usYears >= 3;
@@ -274,7 +278,7 @@ function runMonteCarlo(count = 1000) {
         if (govForces) {
           defenseMode = 'forced';
           defenseAtkBonus = 10;
-          defenseFundCost = 10;
+          defenseFundCost = 5;
           govForcePenalty = -20;
         } else {
           defenseMode = 'dropped';
