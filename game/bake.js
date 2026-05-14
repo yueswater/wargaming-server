@@ -17,12 +17,28 @@ const get = (key) => {
 };
 
 const config = {
-  serverUrl: 'https://wargaming.ntun3si.space',
-  accounts: {
-    tsmc:      { username: get('ROLE_TSMC_USERNAME'),      password: get('ROLE_TSMC_PASSWORD') },
-    gov:       { username: get('ROLE_GOV_USERNAME'),       password: get('ROLE_GOV_PASSWORD') },
-    us:        { username: get('ROLE_US_USERNAME'),        password: get('ROLE_US_PASSWORD') },
-    thinktank: { username: get('ROLE_THINKTANK_USERNAME'), password: get('ROLE_THINKTANK_PASSWORD') },
+  defaultMode: 'menu',
+  profiles: {
+    local: {
+      label: '本地版',
+      serverUrl: 'http://localhost:3001',
+      accounts: {
+        tsmc:      { username: get('ROLE_TSMC_USERNAME'),      password: get('ROLE_TSMC_PASSWORD') },
+        gov:       { username: get('ROLE_GOV_USERNAME'),       password: get('ROLE_GOV_PASSWORD') },
+        us:        { username: get('ROLE_US_USERNAME'),        password: get('ROLE_US_PASSWORD') },
+        thinktank: { username: get('ROLE_THINKTANK_USERNAME'), password: get('ROLE_THINKTANK_PASSWORD') },
+      },
+    },
+    web: {
+      label: '網頁版',
+      serverUrl: 'https://wargaming.ntun3si.space',
+      accounts: {
+        tsmc:      { username: get('ROLE_TSMC_USERNAME'),      password: get('ROLE_TSMC_PASSWORD') },
+        gov:       { username: get('ROLE_GOV_USERNAME'),       password: get('ROLE_GOV_PASSWORD') },
+        us:        { username: get('ROLE_US_USERNAME'),        password: get('ROLE_US_PASSWORD') },
+        thinktank: { username: get('ROLE_THINKTANK_USERNAME'), password: get('ROLE_THINKTANK_PASSWORD') },
+      },
+    },
   },
 };
 

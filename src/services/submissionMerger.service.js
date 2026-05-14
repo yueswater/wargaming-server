@@ -1,10 +1,14 @@
-function mergeSubmissions({ tsmc, gov, us, thinktank }) {
-  // Tech transfer: TSMC wants low, US demands high
+const { DEFAULT_PARAMS } = require('./gameEngine');
+
+function mergeSubmissions({ tsmc, gov, us, thinktank }, params = DEFAULT_PARAMS) {
+  const M = params.merger;
+
+  // Tech transfer: weighted negotiation between TSMC and US
   const techTransfer = Math.min(
-    70,
+    M.techMax,
     Math.max(
-      30,
-      Math.round((tsmc.techTransferPreference * 0.4 + us.usTechDemand * 0.6) / 10) * 10,
+      M.techMin,
+      Math.round((tsmc.techTransferPreference * (M.techWeightTsmc / 100) + us.usTechDemand * (M.techWeightUs / 100)) / 10) * 10,
     ),
   );
 
@@ -12,16 +16,19 @@ function mergeSubmissions({ tsmc, gov, us, thinktank }) {
   const usFund = us.usFund;
   let usYears = us.usYears;
 
-  // GOV can negotiate up security commitment (if gov grants emergency order or tech is high)
+  // GOV emergency order can push years up by 1
   if (gov.emergencyOrderIntent && usYears < 5) usYears = Math.min(5, usYears + 1);
-  if (techTransfer >= 60) usYears = Math.min(5, usYears + 1);
+
+  // Commitment year cap = tech% ÷ yearCapDivisor, max 5
+  const yearCap = Math.min(5, Math.floor(techTransfer / M.yearCapDivisor));
+  usYears = Math.min(usYears, yearCap);
 
   // Blackout weeks: weighted negotiation between TSMC and GOV
   const tsmcBlackoutWeeks = Math.min(
-    5,
+    M.blackoutMax,
     Math.max(
-      1,
-      Math.round(tsmc.tsmcBlackoutWeeks * 0.55 + gov.governmentBlackoutPreference * 0.45),
+      M.blackoutMin,
+      Math.round(tsmc.tsmcBlackoutWeeks * (M.blackoutWeightTsmc / 100) + gov.governmentBlackoutPreference * (M.blackoutWeightGov / 100)),
     ),
   );
 

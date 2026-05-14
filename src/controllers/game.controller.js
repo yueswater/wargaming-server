@@ -95,13 +95,22 @@ exports.submit = (req, res) => {
     // Emit socket events via app-level io
     const io = req.app.get('io');
     if (io) {
-      // Broadcast submission status (no payloads revealed)
+      // Broadcast submission status (no payloads revealed to players)
       io.emit('round:submission-status', {
         gameId: id,
         roundNumber: Number(roundNumber),
         submittedRoles: Object.entries(result.round.submissions)
           .filter(([, v]) => v !== null)
           .map(([role]) => role),
+      });
+
+      // Broadcast full submission detail to godview/admin only
+      io.to('role:admin').emit('round:submission-detail', {
+        gameId: id,
+        roundNumber: Number(roundNumber),
+        role: gameRole,
+        payload,
+        submittedAt: result.round.submissions[gameRole]?.submittedAt,
       });
 
       if (result.allSubmitted) {

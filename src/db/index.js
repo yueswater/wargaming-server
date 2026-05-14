@@ -74,6 +74,20 @@ async function initDatabase() {
       user_agent TEXT,
       ip_address TEXT,
       replaced_by_token_id TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS game_params (
+      id INTEGER PRIMARY KEY,
+      params TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      updated_by TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS broadcast_notifications (
+      id SERIAL PRIMARY KEY,
+      message TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      created_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL
     )
   `);
 }

@@ -8,4 +8,5 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 scripts/
-Makefile
+game/dist/
+game/dist-baked/

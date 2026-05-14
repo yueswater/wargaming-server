@@ -136,6 +136,7 @@ On first start the server automatically creates the SQLite schema and seeds all 
 |-------|---------|-------------|
 | `presence:update` | `{ connectedUserIds }` | Broadcast when any user connects or disconnects |
 | `round:submission-status` | `{ gameId, roundNumber, submittedRoles }` | Broadcast after each role submits (no payload content revealed) |
+| `round:submission-detail` | `{ gameId, roundNumber, role, payload, submittedAt }` | Broadcast to admin/godview immediately after each role submits |
 | `round:resolved` | `{ gameId, roundNumber, result, mergedDecision, gameStatus, nextRoundNumber, aggregateState }` | Broadcast when all four roles have submitted and the round is resolved |
 
 ### Client to Server

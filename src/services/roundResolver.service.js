@@ -2,6 +2,7 @@ const { getGame } = require('../models/game.model');
 const { getCurrentRound, advanceToNextRound } = require('./gameState.service');
 const { mergeSubmissions } = require('./submissionMerger.service');
 const { calculateGame } = require('./gameEngine');
+const { getCachedParams } = require('../models/params.model');
 
 const MAX_ROUNDS = 3;
 
@@ -38,15 +39,16 @@ function submitDecision(gameId, userId, gameRole, payload) {
 function _resolveRound(game, round) {
   round.phase = 'locked';
 
+  const p = getCachedParams();
   const merged = mergeSubmissions({
     tsmc: round.submissions.tsmc.payload,
     gov: round.submissions.gov.payload,
     us: round.submissions.us.payload,
     thinktank: round.submissions.thinktank.payload,
-  });
+  }, p);
   round.mergedDecision = merged;
 
-  const result = calculateGame(merged);
+  const result = calculateGame(merged, p);
   round.result = result;
   round.resolvedAt = new Date().toISOString();
   round.phase = 'resolved';

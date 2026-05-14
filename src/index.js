@@ -8,9 +8,12 @@ const simulationRoutes = require('./routes/simulation.routes');
 const scenarioRoutes = require('./routes/scenario.routes');
 const authRoutes = require('./routes/auth.routes');
 const userRoutes = require('./routes/user.routes');
+const paramsRoutes = require('./routes/params.routes');
+const broadcastRoutes = require('./routes/broadcast.routes');
 const { clientOrigin } = require('./config/auth.config');
 const { initDatabase } = require('./db');
 const { seedRoleUsers } = require('./services/seed.service');
+const { loadParams } = require('./models/params.model');
 const { socketAuth } = require('./socket/socketAuth');
 const { registerSocketHandlers } = require('./socket/registerSocketHandlers');
 
@@ -32,6 +35,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/games', gameRoutes);
 app.use('/api/simulations', simulationRoutes);
 app.use('/api/scenarios', scenarioRoutes);
+app.use('/api/params', paramsRoutes);
+app.use('/api/broadcasts', broadcastRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -48,6 +53,7 @@ const io = new Server(server, {
 async function bootstrap() {
   await initDatabase();
   await seedRoleUsers();
+  await loadParams();
   app.set('io', io);
   io.use(socketAuth);
   registerSocketHandlers(io);
