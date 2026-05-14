@@ -22,7 +22,7 @@ const FUND_TABLE = { 1: 120, 2: 110, 3: 100, 4: 90, 5: 80 };
 const INITIAL = {
   opinion: 60,
   attackProb: 60,
-  baseFund: 80,
+  baseFund: 100,
   totalBlackoutWeeks: 5,
 };
 
