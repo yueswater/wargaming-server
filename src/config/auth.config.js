@@ -12,6 +12,5 @@ module.exports = {
   bcryptRounds: Number(process.env.BCRYPT_ROUNDS || 12),
   clientOrigin: process.env.CLIENT_ORIGIN || 'http://localhost:5173',
   refreshCookieName: 'wargame_refresh_token',
-  databasePath: process.env.DATABASE_PATH || './data/wargaming.sqlite',
   allowSelfRegistration: process.env.ALLOW_SELF_REGISTRATION === 'true',
 };

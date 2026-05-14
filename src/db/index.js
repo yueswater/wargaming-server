@@ -1,67 +1,81 @@
-const fs = require('fs');
-const path = require('path');
-const sqlite3 = require('sqlite3');
-const { open } = require('sqlite');
-const { databasePath } = require('../config/auth.config');
+const { Pool } = require('pg');
 
-let dbPromise = null;
+let pool = null;
+
+// Convert SQLite-style ? placeholders to PostgreSQL $1, $2, ...
+function toPositional(sql) {
+  let i = 0;
+  return sql.replace(/\?/g, () => `$${++i}`);
+}
+
+function getDb() {
+  return {
+    async get(sql, params = []) {
+      const result = await pool.query(toPositional(sql), params);
+      return result.rows[0] || null;
+    },
+    async all(sql, params = []) {
+      const result = await pool.query(toPositional(sql), params);
+      return result.rows;
+    },
+    async run(sql, params = []) {
+      const result = await pool.query(toPositional(sql), params);
+      return { changes: result.rowCount, lastID: null };
+    },
+    async exec(sql) {
+      const statements = sql
+        .split(';')
+        .map(s => s.trim())
+        .filter(s => s.length > 0 && !s.startsWith('PRAGMA'));
+      for (const stmt of statements) {
+        await pool.query(stmt);
+      }
+    },
+  };
+}
 
 async function initDatabase() {
-  if (dbPromise) {
-    return dbPromise;
-  }
+  if (pool) return;
 
-  dbPromise = (async () => {
-    const resolvedPath = path.resolve(process.cwd(), databasePath);
-    fs.mkdirSync(path.dirname(resolvedPath), { recursive: true });
+  pool = new Pool({
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    host: process.env.DB_SOCKET_PATH
+      ? process.env.DB_SOCKET_PATH
+      : process.env.DB_HOST || 'localhost',
+    port: Number(process.env.DB_PORT || 5432),
+  });
 
-    const db = await open({
-      filename: resolvedPath,
-      driver: sqlite3.Database,
-    });
+  const db = getDb();
 
-    await db.exec(`
-      PRAGMA foreign_keys = ON;
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      display_name TEXT NOT NULL,
+      password_hash TEXT NOT NULL,
+      role TEXT NOT NULL DEFAULT 'user',
+      game_role TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      last_login_at TEXT
+    );
 
-      CREATE TABLE IF NOT EXISTS users (
-        id TEXT PRIMARY KEY,
-        username TEXT NOT NULL UNIQUE,
-        display_name TEXT NOT NULL,
-        password_hash TEXT NOT NULL,
-        role TEXT NOT NULL DEFAULT 'user',
-        game_role TEXT,
-        status TEXT NOT NULL DEFAULT 'active',
-        created_at TEXT NOT NULL,
-        updated_at TEXT NOT NULL,
-        last_login_at TEXT
-      );
-
-      CREATE TABLE IF NOT EXISTS refresh_tokens (
-        id TEXT PRIMARY KEY,
-        user_id TEXT NOT NULL,
-        token_hash TEXT NOT NULL,
-        expires_at TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        last_used_at TEXT,
-        revoked_at TEXT,
-        user_agent TEXT,
-        ip_address TEXT,
-        replaced_by_token_id TEXT,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      );
-    `);
-
-    return db;
-  })();
-
-  return dbPromise;
+    CREATE TABLE IF NOT EXISTS refresh_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      last_used_at TEXT,
+      revoked_at TEXT,
+      user_agent TEXT,
+      ip_address TEXT,
+      replaced_by_token_id TEXT
+    )
+  `);
 }
 
-async function getDb() {
-  return initDatabase();
-}
-
-module.exports = {
-  initDatabase,
-  getDb,
-};
+module.exports = { initDatabase, getDb };
