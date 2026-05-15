@@ -10,6 +10,7 @@ function registerSocketHandlers(io) {
     const userId = socket.data.user.id;
     markConnected(userId, socket.id);
     socket.join(`role:${socket.data.user.role}`);
+    socket.join(`user:${userId}`);
 
     socket.emit('system:connected', {
       user: socket.data.user,

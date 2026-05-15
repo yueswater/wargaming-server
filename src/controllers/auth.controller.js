@@ -54,6 +54,10 @@ exports.login = async (req, res) => {
   try {
     const session = await login(req.body, getRequestContext(req));
     setRefreshCookie(res, session.refreshToken);
+    const io = req.app.get('io');
+    if (io) {
+      io.to(`user:${session.user.id}`).emit('auth:force-logout');
+    }
     return res.json({
       user: session.user,
       accessToken: session.accessToken,

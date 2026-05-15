@@ -106,6 +106,8 @@ async function login({ username, password }, context = {}) {
     lastLoginAt: new Date().toISOString(),
   });
 
+  await revokeAllRefreshTokensForUser(user.id);
+
   return issueSession(updatedUser, context);
 }
 
