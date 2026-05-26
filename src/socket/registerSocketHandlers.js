@@ -4,6 +4,8 @@ const {
   getConnectedUserIds,
 } = require('./presence');
 const { createBroadcastNotification } = require('../models/broadcastNotification.model');
+const { getGame } = require('../models/game.model');
+const { buildSettlement } = require('../services/settlement.service');
 
 function registerSocketHandlers(io) {
   io.on('connection', (socket) => {
@@ -36,6 +38,18 @@ function registerSocketHandlers(io) {
       } catch (_err) {
         socket.emit('broadcast:error', { error: '廣播儲存失敗' });
       }
+    });
+
+    // God view opens the settlement screen → broadcast the modal to every
+    // account and lock down every non-admin client.
+    socket.on('settlement:show', (data) => {
+      if (socket.data.user.role !== 'admin') return;
+      const game = getGame(data?.gameId);
+      if (!game) return;
+      if (!game.settlementShownAt) {
+        game.settlementShownAt = new Date().toISOString();
+      }
+      io.emit('settlement:open', buildSettlement(game));
     });
 
     socket.on('disconnect', () => {

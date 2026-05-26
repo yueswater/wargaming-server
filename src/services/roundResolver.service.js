@@ -65,6 +65,7 @@ function _resolveRound(game, round) {
 
   if (result.allOk || game.currentRoundNumber >= MAX_ROUNDS) {
     game.status = 'completed';
+    game.endedAt = new Date().toISOString();
   } else {
     advanceToNextRound(game);
   }

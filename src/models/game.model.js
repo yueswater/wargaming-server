@@ -20,6 +20,8 @@ function createGame({ name, hostUserId } = {}) {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     hostUserId: hostUserId || null,
+    endedAt: null,
+    settlementShownAt: null,
     currentRoundNumber: 0,
     players: {
       tsmc: makePlayerSlot('tsmc'),
@@ -44,11 +46,22 @@ function getGame(id) {
 
 function getActiveGame() {
   let lobbyGame = null;
+  let recentCompleted = null;
   for (const game of games.values()) {
     if (game.status === 'active') return game;
     if (game.status === 'lobby' && !lobbyGame) lobbyGame = game;
+    if (game.status === 'completed') {
+      if (
+        !recentCompleted ||
+        new Date(game.updatedAt) > new Date(recentCompleted.updatedAt)
+      ) {
+        recentCompleted = game;
+      }
+    }
   }
-  return lobbyGame;
+  // Priority: active > lobby > most recently completed. Surfacing the finished
+  // game lets god view show the 結算畫面 button and players see their result.
+  return lobbyGame || recentCompleted;
 }
 
 function getAllGames() {

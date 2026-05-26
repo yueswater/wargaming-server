@@ -1,6 +1,8 @@
 const { getGame, getActiveGame } = require('../models/game.model');
 const { createAndStartGame } = require('../services/gameState.service');
 const { submitDecision } = require('../services/roundResolver.service');
+const { saveGameResult, listGameResults } = require('../models/gameResult.model');
+const { formatTaipei } = require('../services/settlement.service');
 const { getConnectedUserIds } = require('../socket/presence');
 
 function safeGame(game) {
@@ -11,6 +13,8 @@ function safeGame(game) {
     status: game.status,
     createdAt: game.createdAt,
     updatedAt: game.updatedAt,
+    endedAt: game.endedAt,
+    settlementShownAt: game.settlementShownAt,
     currentRoundNumber: game.currentRoundNumber,
     players: game.players,
     rounds: game.rounds.map((r) => ({
@@ -61,11 +65,36 @@ exports.adminGetActive = (req, res) => {
     status: game.status,
     createdAt: game.createdAt,
     updatedAt: game.updatedAt,
+    endedAt: game.endedAt,
+    settlementShownAt: game.settlementShownAt,
     currentRoundNumber: game.currentRoundNumber,
     players: game.players,
     rounds: game.rounds,
     aggregateState: game.aggregateState,
   });
+};
+
+// GET /api/games/results — list every finished game (admin / god view only)
+exports.listResults = async (req, res) => {
+  try {
+    const results = await listGameResults(req.query.limit);
+    const total = results.length;
+    const successCount = results.filter((r) => r.outcome === 'success').length;
+    res.json({
+      summary: {
+        total,
+        successCount,
+        failCount: total - successCount,
+        successRate: total ? Math.round((successCount / total) * 100) : 0,
+      },
+      results: results.map((r) => ({
+        ...r,
+        endedAtTaipei: formatTaipei(r.endedAt),
+      })),
+    });
+  } catch (_err) {
+    res.status(500).json({ error: '無法取得兵推結果' });
+  }
 };
 
 // GET /api/games/:id — get a specific game
@@ -76,7 +105,7 @@ exports.get = (req, res) => {
 };
 
 // POST /api/games/:id/rounds/:roundNumber/submissions — submit a decision
-exports.submit = (req, res) => {
+exports.submit = async (req, res) => {
   try {
     const { id, roundNumber } = req.params;
     const { gameRole, payload } = req.body;
@@ -91,6 +120,15 @@ exports.submit = (req, res) => {
     if (!round) return res.status(404).json({ error: '找不到此回合' });
 
     const result = submitDecision(id, req.user.id, gameRole, payload);
+
+    // Persist the finished game exactly once, the moment it completes.
+    if (result.game.status === 'completed') {
+      try {
+        await saveGameResult(result.game);
+      } catch (persistErr) {
+        console.error('遊戲結果儲存失敗', persistErr);
+      }
+    }
 
     // Emit socket events via app-level io
     const io = req.app.get('io');

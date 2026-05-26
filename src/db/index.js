@@ -88,6 +88,20 @@ async function initDatabase() {
       message TEXT NOT NULL,
       created_at TEXT NOT NULL,
       created_by_user_id TEXT REFERENCES users(id) ON DELETE SET NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS game_results (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      outcome TEXT NOT NULL,
+      final_opinion INTEGER NOT NULL,
+      final_attack INTEGER NOT NULL,
+      total_rounds INTEGER NOT NULL,
+      players TEXT NOT NULL,
+      rounds TEXT NOT NULL,
+      aggregate_state TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      ended_at TEXT NOT NULL
     )
   `);
 }
