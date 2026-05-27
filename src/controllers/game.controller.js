@@ -41,6 +41,16 @@ exports.start = async (req, res) => {
       hostUserId,
       connectedUserIds,
     });
+
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('game:started', {
+        gameId: game.id,
+        status: game.status,
+        currentRoundNumber: game.currentRoundNumber,
+      });
+    }
+
     res.status(201).json(safeGame(game));
   } catch (err) {
     res.status(400).json({ error: err.message });
